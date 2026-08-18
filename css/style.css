@@ -103,6 +103,11 @@ tr:last-child td { border-bottom: none; }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
+input, select, textarea, button {
+  height: 40px;
+  box-sizing: border-box;
+}
+
 input, select, textarea {
   padding: 8px 10px;
   border: 1px solid var(--gray-200);
