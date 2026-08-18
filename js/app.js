@@ -231,6 +231,16 @@ function renderUsageMemberRows() {
     .join('') || '<tr><td colspan="3" class="muted">尚無組員，先到「組員管理」新增</td></tr>';
 }
 
+function renderUsageExtraMemberOptions() {
+  const sel = document.getElementById('usage-extra-member');
+  const prev = sel.value;
+  sel.innerHTML = state.members
+    .filter((m) => m.active)
+    .map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`)
+    .join('');
+  if (prev && [...sel.options].some((o) => o.value === prev)) sel.value = prev;
+}
+
 document.getElementById('apply-split-btn').addEventListener('click', () => {
   const errEl = document.getElementById('usage-error');
   errEl.textContent = '';
@@ -267,13 +277,29 @@ document.getElementById('submit-usage-btn').addEventListener('click', async () =
       note: note || null,
     });
   }
-  if (records.length === 0) { errEl.textContent = '請至少勾選一位組員並填金額'; return; }
+  const extraMemberId = document.getElementById('usage-extra-member').value;
+  const extraAmountRaw = document.getElementById('usage-extra-amount').value;
+  if (extraMemberId && extraAmountRaw !== '') {
+    const extraAmount = Number(extraAmountRaw);
+    if (!Number.isNaN(extraAmount) && extraAmount > 0) {
+      records.push({
+        team_id: state.teamId,
+        member_id: extraMemberId,
+        month: TBFCalc.toMonthDate(monthInput),
+        amount: extraAmount,
+        note: note ? `${note} · 額外費用（不分攤）` : '額外費用（不分攤）',
+      });
+    }
+  }
+
+  if (records.length === 0) { errEl.textContent = '請至少勾選一位組員並填金額，或填寫額外費用'; return; }
 
   const { error } = await sb.from('usage_log').insert(records);
   if (error) { errEl.textContent = '新增失敗：' + error.message; return; }
 
   document.getElementById('usage-split-amount').value = '';
   document.getElementById('usage-note').value = '';
+  document.getElementById('usage-extra-amount').value = '';
   document.querySelectorAll('#usage-member-rows .usage-member-amount').forEach((i) => { i.value = ''; });
   await refreshAndRender();
 });
@@ -315,6 +341,7 @@ async function refreshAndRender() {
   renderMembersList();
   renderQuotaHistory();
   renderUsageMemberRows();
+  renderUsageExtraMemberOptions();
   renderUsageList();
 }
 
