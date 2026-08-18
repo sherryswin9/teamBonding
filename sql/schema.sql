@@ -48,6 +48,12 @@ alter table members enable row level security;
 alter table monthly_quota enable row level security;
 alter table usage_log enable row level security;
 
+drop policy if exists "public read teams" on teams;
+drop policy if exists "public insert teams" on teams;
+drop policy if exists "public all members" on members;
+drop policy if exists "public all monthly_quota" on monthly_quota;
+drop policy if exists "public all usage_log" on usage_log;
+
 create policy "public read teams" on teams for select using (true);
 create policy "public insert teams" on teams for insert with check (true);
 
