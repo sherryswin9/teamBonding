@@ -1,0 +1,151 @@
+:root {
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-500: #64748b;
+  --gray-700: #334155;
+  --gray-900: #0f172a;
+  --white: #ffffff;
+  --danger: #ef4444;
+  --success: #16a34a;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(15, 23, 42, .08), 0 1px 2px rgba(15, 23, 42, .04);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, "PingFang TC", "Noto Sans TC", "Segoe UI", sans-serif;
+  background: var(--blue-50);
+  color: var(--gray-900);
+}
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--blue-600);
+  color: var(--white);
+}
+
+.topbar .brand { font-weight: 700; font-size: 16px; }
+.topbar .team-info { font-size: 13px; opacity: .9; }
+.topbar button {
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.35);
+  color: var(--white);
+}
+
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.card h2 { margin: 0 0 12px; font-size: 16px; color: var(--blue-700); }
+.card h3 { margin: 0 0 8px; font-size: 14px; color: var(--gray-700); }
+
+.grid-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.stat {
+  background: var(--blue-50);
+  border: 1px solid var(--blue-100);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.stat .label { font-size: 12px; color: var(--gray-500); }
+.stat .value { font-size: 20px; font-weight: 700; color: var(--blue-700); margin-top: 2px; }
+.stat .value.neg { color: var(--danger); }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--gray-100); }
+th { color: var(--gray-500); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+tr:last-child td { border-bottom: none; }
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+.tab-btn {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--blue-200);
+  background: var(--white);
+  color: var(--blue-700);
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.tab-btn.active { background: var(--blue-600); color: var(--white); border-color: var(--blue-600); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+input, select, textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--white);
+  color: var(--gray-900);
+}
+label { font-size: 13px; color: var(--gray-700); display: block; margin-bottom: 4px; }
+.field { margin-bottom: 12px; }
+
+button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--blue-600);
+  background: var(--blue-600);
+  color: var(--white);
+  font-size: 14px;
+  cursor: pointer;
+}
+button.secondary { background: var(--white); color: var(--blue-600); }
+button.ghost { background: transparent; color: var(--gray-500); border-color: transparent; }
+button.danger { background: var(--white); color: var(--danger); border-color: var(--danger); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+
+.row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.muted { color: var(--gray-500); font-size: 13px; }
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--blue-100);
+  color: var(--blue-700);
+}
+.badge.off { background: var(--gray-100); color: var(--gray-500); }
+
+.center-box {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.auth-card { width: 100%; max-width: 380px; }
+.auth-card .divider { text-align: center; color: var(--gray-500); font-size: 12px; margin: 16px 0; }
+.error-text { color: var(--danger); font-size: 13px; margin-top: 6px; }

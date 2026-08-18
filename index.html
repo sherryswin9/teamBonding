@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Team Bonding Fund — 進入組別</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="center-box">
+    <div class="card auth-card">
+      <h2>Team Bonding Fund</h2>
+      <p class="muted">團隊活動基金管理小工具</p>
+
+      <div class="field">
+        <label for="join-code">輸入組別代碼</label>
+        <div class="row">
+          <input id="join-code" placeholder="例如 abc123" style="flex:1" />
+          <button id="join-btn">進入</button>
+        </div>
+        <div class="error-text" id="join-error"></div>
+      </div>
+
+      <div class="divider">— 或 —</div>
+
+      <div class="field">
+        <label for="new-team-name">建立新組別（名稱）</label>
+        <div class="row">
+          <input id="new-team-name" placeholder="例如 產品部 A 組" style="flex:1" />
+          <button id="create-btn" class="secondary">建立</button>
+        </div>
+        <div class="error-text" id="create-error"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/team-select.js"></script>
+</body>
+</html>
