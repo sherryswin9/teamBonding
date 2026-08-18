@@ -201,31 +201,50 @@ document.getElementById('save-quota-btn').addEventListener('click', async () => 
 });
 
 // ---------- Usage ----------
+const ALL_MEMBERS_VALUE = 'ALL';
+let usageRowCounter = 0;
+
 function usageMemberOptionsHtml() {
-  return state.members
+  const activeOptions = state.members
     .filter((m) => m.active)
     .map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`)
     .join('');
+  return `<option value="${ALL_MEMBERS_VALUE}">👥 全部組員</option>${activeOptions}`;
 }
 
 function addUsageRow() {
   const tbody = document.getElementById('usage-rows');
+  const rowId = ++usageRowCounter;
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td><select class="usage-row-member">${usageMemberOptionsHtml()}</select></td>
-    <td><input type="number" class="usage-row-amount" min="0" step="1" placeholder="0" style="width:100px" /></td>
+    <td>
+      <input type="number" class="usage-row-amount" min="0" step="1" placeholder="0" style="width:100px" />
+      <div class="usage-row-split-mode muted" style="display:none; font-size:12px; margin-top:4px;">
+        <label style="display:inline; margin-right:8px;"><input type="radio" name="split-mode-${rowId}" value="split" checked /> 平均分攤</label>
+        <label style="display:inline;"><input type="radio" name="split-mode-${rowId}" value="each" /> 每人都算這金額</label>
+      </div>
+    </td>
     <td><input type="text" class="usage-row-note" placeholder="備註（選填）" style="width:100%" /></td>
     <td><button class="ghost" data-remove-row>✕</button></td>
   `;
   tr.querySelector('[data-remove-row]').addEventListener('click', () => tr.remove());
+  const memberSelect = tr.querySelector('.usage-row-member');
+  const splitModeDiv = tr.querySelector('.usage-row-split-mode');
+  memberSelect.addEventListener('change', () => {
+    splitModeDiv.style.display = memberSelect.value === ALL_MEMBERS_VALUE ? 'block' : 'none';
+  });
   tbody.appendChild(tr);
 }
 
 function refreshUsageRowMemberOptions() {
-  document.querySelectorAll('#usage-rows .usage-row-member').forEach((sel) => {
+  document.querySelectorAll('#usage-rows tr').forEach((tr) => {
+    const sel = tr.querySelector('.usage-row-member');
     const prev = sel.value;
     sel.innerHTML = usageMemberOptionsHtml();
     if (prev && [...sel.options].some((o) => o.value === prev)) sel.value = prev;
+    const splitModeDiv = tr.querySelector('.usage-row-split-mode');
+    splitModeDiv.style.display = sel.value === ALL_MEMBERS_VALUE ? 'block' : 'none';
   });
 }
 
@@ -237,6 +256,7 @@ document.getElementById('submit-usage-rows-btn').addEventListener('click', async
   const monthInput = document.getElementById('usage-month').value;
   if (!monthInput) { errEl.textContent = '請選擇月份'; return; }
 
+  const activeMembers = state.members.filter((m) => m.active);
   const records = [];
   for (const row of document.querySelectorAll('#usage-rows tr')) {
     const memberId = row.querySelector('.usage-row-member').value;
@@ -245,6 +265,26 @@ document.getElementById('submit-usage-rows-btn').addEventListener('click', async
     if (!memberId || amountRaw === '') continue;
     const amount = Number(amountRaw);
     if (Number.isNaN(amount) || amount < 0) continue;
+
+    if (memberId === ALL_MEMBERS_VALUE) {
+      if (activeMembers.length === 0) continue;
+      const mode = row.querySelector('.usage-row-split-mode input:checked')?.value || 'split';
+      const perPerson = mode === 'split'
+        ? Math.round((amount / activeMembers.length) * 100) / 100
+        : amount;
+      const tag = mode === 'split' ? `全部組員平均分攤（總額 ${fmt(amount)}）` : '全部組員（每人同額）';
+      for (const m of activeMembers) {
+        records.push({
+          team_id: state.teamId,
+          member_id: m.id,
+          month: TBFCalc.toMonthDate(monthInput),
+          amount: perPerson,
+          note: note ? `${note} · ${tag}` : tag,
+        });
+      }
+      continue;
+    }
+
     records.push({
       team_id: state.teamId,
       member_id: memberId,
