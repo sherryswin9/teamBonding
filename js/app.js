@@ -8,7 +8,7 @@ const state = {
 };
 
 function fmt(n) {
-  return Number(n || 0).toLocaleString('zh-Hant');
+  return Number(n || 0).toLocaleString(localeTag());
 }
 
 function requireTeam() {
@@ -21,7 +21,7 @@ function requireTeam() {
 }
 
 function renderTopbar() {
-  document.getElementById('team-info').textContent = `組別代碼：${state.teamCode}`;
+  document.getElementById('team-info').textContent = `${t('teamCodeLabel')}: ${state.teamCode}`;
 }
 
 document.getElementById('switch-team-btn').addEventListener('click', () => {
@@ -117,20 +117,20 @@ function renderDashboard() {
         <td>${fmt(row.incomingCarry)}</td>
         <td>${fmt(row.totalAvailable)}</td>
         <td>${fmt(row.used)}</td>
-        <td class="${row.balance < 0 ? 'value neg' : ''}">${fmt(row.carryToNextMonth)}${row.balance < 0 ? '（超支 ' + fmt(-row.balance) + '）' : ''}</td>
+        <td class="${row.balance < 0 ? 'value neg' : ''}">${fmt(row.carryToNextMonth)}${row.balance < 0 ? `（${t('overSpent')} ${fmt(-row.balance)}）` : ''}</td>
       </tr>`;
     })
     .join('');
-  document.getElementById('member-rows').innerHTML = rowsHtml || '<tr><td colspan="6" class="muted">尚無組員</td></tr>';
+  document.getElementById('member-rows').innerHTML = rowsHtml || `<tr><td colspan="6" class="muted">${t('noMembers')}</td></tr>`;
 
   const teamAvailable = teamOwnQuota + teamCarryIn;
   document.getElementById('team-summary').innerHTML = `
-    <div class="stat"><div class="label">組員人數</div><div class="value">${activeMembers.length}</div></div>
-    <div class="stat"><div class="label">本月團隊配額</div><div class="value">${fmt(teamOwnQuota)}</div></div>
-    <div class="stat"><div class="label">上月結轉</div><div class="value">${fmt(teamCarryIn)}</div></div>
-    <div class="stat"><div class="label">本月可用總額</div><div class="value">${fmt(teamAvailable)}</div></div>
-    <div class="stat"><div class="label">本月已使用</div><div class="value">${fmt(teamUsed)}</div></div>
-    <div class="stat"><div class="label">可帶至下月</div><div class="value">${fmt(teamCarryOut)}</div></div>
+    <div class="stat"><div class="label">${t('statMemberCount')}</div><div class="value">${activeMembers.length}</div></div>
+    <div class="stat"><div class="label">${t('statTeamQuota')}</div><div class="value">${fmt(teamOwnQuota)}</div></div>
+    <div class="stat"><div class="label">${t('statCarryIn')}</div><div class="value">${fmt(teamCarryIn)}</div></div>
+    <div class="stat"><div class="label">${t('statAvailable')}</div><div class="value">${fmt(teamAvailable)}</div></div>
+    <div class="stat"><div class="label">${t('statUsed')}</div><div class="value">${fmt(teamUsed)}</div></div>
+    <div class="stat"><div class="label">${t('statCarryOut')}</div><div class="value">${fmt(teamCarryOut)}</div></div>
   `;
 }
 
@@ -138,17 +138,20 @@ document.getElementById('dashboard-month').addEventListener('change', renderDash
 
 // ---------- Members ----------
 function renderMembersList() {
-  document.getElementById('member-count').textContent = state.members.filter((m) => m.active).length;
+  const activeCount = state.members.filter((m) => m.active).length;
+  document.getElementById('member-list-title').textContent =
+    `${t('memberListTitle')}（${activeCount}${t('unitPeople')}）`;
+
   document.getElementById('members-list').innerHTML = state.members
     .map((m) => `
       <tr>
         <td>${escapeHtml(m.name)}</td>
-        <td><span class="badge ${m.active ? '' : 'off'}">${m.active ? '啟用中' : '已停用'}</span></td>
-        <td class="muted">${new Date(m.created_at).toLocaleDateString('zh-Hant')}</td>
-        <td><button class="secondary" data-toggle-member="${m.id}" data-active="${m.active}">${m.active ? '停用' : '啟用'}</button></td>
+        <td><span class="badge ${m.active ? '' : 'off'}">${m.active ? t('statusActive') : t('statusInactive')}</span></td>
+        <td class="muted">${new Date(m.created_at).toLocaleDateString(localeTag())}</td>
+        <td><button class="secondary" data-toggle-member="${m.id}" data-active="${m.active}">${m.active ? t('btnDeactivate') : t('btnActivate')}</button></td>
       </tr>
     `)
-    .join('') || '<tr><td colspan="4" class="muted">尚無組員</td></tr>';
+    .join('') || `<tr><td colspan="4" class="muted">${t('noMembers')}</td></tr>`;
 
   document.querySelectorAll('[data-toggle-member]').forEach((btn) => {
     btn.addEventListener('click', async () => {
@@ -165,9 +168,9 @@ document.getElementById('add-member-btn').addEventListener('click', async () => 
   const errEl = document.getElementById('member-error');
   errEl.textContent = '';
   const name = input.value.trim();
-  if (!name) { errEl.textContent = '請輸入姓名'; return; }
+  if (!name) { errEl.textContent = t('errMemberNameEmpty'); return; }
   const { error } = await sb.from('members').insert({ team_id: state.teamId, name });
-  if (error) { errEl.textContent = '新增失敗：' + error.message; return; }
+  if (error) { errEl.textContent = t('errMemberAddFail') + error.message; return; }
   input.value = '';
   await refreshAndRender();
 });
@@ -178,7 +181,7 @@ function renderQuotaHistory() {
     .sort((a, b) => TBFCalc.compareMonth(TBFCalc.toMonthKey(b.effective_month), TBFCalc.toMonthKey(a.effective_month)))
     .map((q) => `<tr><td>${TBFCalc.formatMonthLabel(TBFCalc.toMonthKey(q.effective_month))}</td><td>${fmt(q.amount_per_member)}</td></tr>`)
     .join('');
-  document.getElementById('quota-history').innerHTML = rows || '<tr><td colspan="2" class="muted">尚未設定</td></tr>';
+  document.getElementById('quota-history').innerHTML = rows || `<tr><td colspan="2" class="muted">${t('noQuotaSet')}</td></tr>`;
 }
 
 document.getElementById('save-quota-btn').addEventListener('click', async () => {
@@ -186,9 +189,9 @@ document.getElementById('save-quota-btn').addEventListener('click', async () => 
   const amountInput = document.getElementById('quota-amount').value;
   const errEl = document.getElementById('quota-error');
   errEl.textContent = '';
-  if (!monthInput) { errEl.textContent = '請選擇生效月份'; return; }
+  if (!monthInput) { errEl.textContent = t('errQuotaMonthEmpty'); return; }
   const amount = Number(amountInput);
-  if (Number.isNaN(amount) || amount < 0) { errEl.textContent = '請輸入正確金額'; return; }
+  if (Number.isNaN(amount) || amount < 0) { errEl.textContent = t('errAmountInvalid'); return; }
 
   const { error } = await sb
     .from('monthly_quota')
@@ -196,7 +199,7 @@ document.getElementById('save-quota-btn').addEventListener('click', async () => 
       { team_id: state.teamId, effective_month: TBFCalc.toMonthDate(monthInput), amount_per_member: amount },
       { onConflict: 'team_id,effective_month' }
     );
-  if (error) { errEl.textContent = '儲存失敗：' + error.message; return; }
+  if (error) { errEl.textContent = t('errQuotaSaveFail') + error.message; return; }
   await refreshAndRender();
 });
 
@@ -231,18 +234,18 @@ function renderUsageMemberRows() {
         </tr>
       `;
     })
-    .join('') || '<tr><td colspan="4" class="muted">尚無組員，先到「組員管理」新增</td></tr>';
+    .join('') || `<tr><td colspan="4" class="muted">${t('noMembersAddFirst')}</td></tr>`;
 }
 
 document.getElementById('apply-split-btn').addEventListener('click', () => {
   const errEl = document.getElementById('usage-error');
   errEl.textContent = '';
   const total = Number(document.getElementById('usage-split-amount').value);
-  if (Number.isNaN(total) || total < 0) { errEl.textContent = '請輸入正確的分攤總金額'; return; }
+  if (Number.isNaN(total) || total < 0) { errEl.textContent = t('errSplitTotalInvalid'); return; }
 
   const checkedRows = [...document.querySelectorAll('#usage-member-rows tr[data-member-id]')]
     .filter((tr) => tr.querySelector('.usage-member-check').checked);
-  if (checkedRows.length === 0) { errEl.textContent = '請至少勾選一位組員'; return; }
+  if (checkedRows.length === 0) { errEl.textContent = t('errNoMemberChecked'); return; }
 
   const perPerson = Math.round((total / checkedRows.length) * 100) / 100;
   checkedRows.forEach((tr) => { tr.querySelector('.usage-member-amount').value = perPerson; });
@@ -252,7 +255,7 @@ document.getElementById('submit-usage-btn').addEventListener('click', async () =
   const errEl = document.getElementById('usage-error');
   errEl.textContent = '';
   const monthInput = document.getElementById('usage-month').value;
-  if (!monthInput) { errEl.textContent = '請選擇月份'; return; }
+  if (!monthInput) { errEl.textContent = t('errMonthEmpty'); return; }
   const note = document.getElementById('usage-note').value.trim();
 
   const records = [];
@@ -281,15 +284,15 @@ document.getElementById('submit-usage-btn').addEventListener('click', async () =
         member_id: memberId,
         month: TBFCalc.toMonthDate(monthInput),
         amount: extraAmount,
-        note: note ? `${note} · 額外費用（不分攤）` : '額外費用（不分攤）',
+        note: note ? `${note} · ${t('tagExtraCost')}` : t('tagExtraCost'),
       });
     }
   }
 
-  if (records.length === 0) { errEl.textContent = '請至少填一個金額（分攤或額外費用）'; return; }
+  if (records.length === 0) { errEl.textContent = t('errNoRecords'); return; }
 
   const { error } = await sb.from('usage_log').insert(records);
-  if (error) { errEl.textContent = '新增失敗：' + error.message; return; }
+  if (error) { errEl.textContent = t('errUsageAddFail') + error.message; return; }
 
   document.getElementById('usage-split-amount').value = '';
   document.getElementById('usage-note').value = '';
@@ -298,7 +301,7 @@ document.getElementById('submit-usage-btn').addEventListener('click', async () =
 });
 
 function renderUsageList() {
-  const memberName = (id) => state.members.find((m) => m.id === id)?.name || '（已刪除）';
+  const memberName = (id) => state.members.find((m) => m.id === id)?.name || t('deletedMember');
   document.getElementById('usage-list').innerHTML = state.usageLog
     .map((u) => `
       <tr>
@@ -306,10 +309,10 @@ function renderUsageList() {
         <td>${escapeHtml(memberName(u.member_id))}</td>
         <td>${fmt(u.amount)}</td>
         <td class="muted">${escapeHtml(u.note || '')}</td>
-        <td><button class="danger" data-delete-usage="${u.id}">刪除</button></td>
+        <td><button class="danger" data-delete-usage="${u.id}">${t('deleteBtn')}</button></td>
       </tr>
     `)
-    .join('') || '<tr><td colspan="5" class="muted">尚無紀錄</td></tr>';
+    .join('') || `<tr><td colspan="5" class="muted">${t('noRecords')}</td></tr>`;
 
   document.querySelectorAll('[data-delete-usage]').forEach((btn) => {
     btn.addEventListener('click', async () => {

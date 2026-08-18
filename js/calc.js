@@ -46,8 +46,11 @@ const TBFCalc = (() => {
   }
 
   function formatMonthLabel(monthKey) {
-    const [y, m] = monthKey.split('-');
-    return `${y} 年 ${Number(m)} 月`;
+    const [y, m] = monthKey.split('-').map(Number);
+    if (typeof getLang === 'function' && getLang() === 'en') {
+      return new Date(y, m - 1, 1).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+    }
+    return `${y} 年 ${m} 月`;
   }
 
   // quotaHistory: [{ effective_month: '2026-08-01', amount_per_member: 500 }, ...]

@@ -157,6 +157,37 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 .badge.off { background: var(--gray-100); color: var(--gray-500); }
 
+.lang-switcher {
+  display: flex;
+  gap: 4px;
+}
+.lang-btn {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+  border-radius: 999px;
+}
+.topbar .lang-btn {
+  background: rgba(255, 255, 255, .15);
+  border: 1px solid rgba(255, 255, 255, .35);
+  color: var(--white);
+}
+.topbar .lang-btn.active-lang {
+  background: var(--white);
+  color: var(--blue-700);
+  font-weight: 600;
+}
+.auth-card .lang-btn {
+  background: var(--white);
+  border: 1px solid var(--blue-200);
+  color: var(--blue-700);
+}
+.auth-card .lang-btn.active-lang {
+  background: var(--blue-600);
+  color: var(--white);
+  border-color: var(--blue-600);
+}
+
 .center-box {
   min-height: 80vh;
   display: flex;

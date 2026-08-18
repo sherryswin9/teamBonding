@@ -10,24 +10,28 @@
   <div class="topbar">
     <div class="brand">💙 Team Bonding Fund</div>
     <div style="display:flex; align-items:center; gap:12px;">
+      <div class="lang-switcher">
+        <button class="lang-btn" data-lang="zh">中文</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+      </div>
       <span class="team-info" id="team-info">—</span>
-      <button id="switch-team-btn">切換組別</button>
+      <button id="switch-team-btn" data-i18n="switchTeam">切換組別</button>
     </div>
   </div>
 
   <div class="page">
     <div class="tabs">
-      <button class="tab-btn active" data-tab="dashboard">總覽</button>
-      <button class="tab-btn" data-tab="members">組員管理</button>
-      <button class="tab-btn" data-tab="quota">額度設定</button>
-      <button class="tab-btn" data-tab="usage">使用紀錄</button>
+      <button class="tab-btn active" data-tab="dashboard" data-i18n="tabDashboard">總覽</button>
+      <button class="tab-btn" data-tab="members" data-i18n="tabMembers">組員管理</button>
+      <button class="tab-btn" data-tab="quota" data-i18n="tabQuota">額度設定</button>
+      <button class="tab-btn" data-tab="usage" data-i18n="tabUsage">使用紀錄</button>
     </div>
 
     <!-- 總覽 -->
     <div class="tab-panel active" id="panel-dashboard">
       <div class="card">
         <div class="row" style="justify-content: space-between;">
-          <h2 style="margin:0;">團隊總覽</h2>
+          <h2 style="margin:0;" data-i18n="teamOverviewTitle">團隊總覽</h2>
           <div class="field" style="margin:0;">
             <select id="dashboard-month"></select>
           </div>
@@ -36,16 +40,16 @@
       </div>
 
       <div class="card">
-        <h3>各組員本月狀況</h3>
+        <h3 data-i18n="memberStatusTitle">各組員本月狀況</h3>
         <table>
           <thead>
             <tr>
-              <th>組員</th>
-              <th>本月配額</th>
-              <th>上月結轉</th>
-              <th>本月可用</th>
-              <th>本月已用</th>
-              <th>本月結餘（可帶至下月）</th>
+              <th data-i18n="colMember">組員</th>
+              <th data-i18n="colOwnQuota">本月配額</th>
+              <th data-i18n="colCarryIn">上月結轉</th>
+              <th data-i18n="colAvailable">本月可用</th>
+              <th data-i18n="colUsed">本月已用</th>
+              <th data-i18n="colCarryOut">本月結餘（可帶至下月）</th>
             </tr>
           </thead>
           <tbody id="member-rows"></tbody>
@@ -56,17 +60,24 @@
     <!-- 組員管理 -->
     <div class="tab-panel" id="panel-members">
       <div class="card">
-        <h2>新增組員</h2>
+        <h2 data-i18n="addMemberTitle">新增組員</h2>
         <div class="row">
-          <input id="new-member-name" placeholder="組員姓名" style="flex:1" />
-          <button id="add-member-btn">新增</button>
+          <input id="new-member-name" placeholder="組員姓名" data-i18n-placeholder="memberNamePlaceholder" style="flex:1" />
+          <button id="add-member-btn" data-i18n="addBtn">新增</button>
         </div>
         <div class="error-text" id="member-error"></div>
       </div>
       <div class="card">
-        <h3>組員名單（<span id="member-count">0</span> 人）</h3>
+        <h3 id="member-list-title">組員名單（0 人）</h3>
         <table>
-          <thead><tr><th>姓名</th><th>狀態</th><th>加入時間</th><th></th></tr></thead>
+          <thead>
+            <tr>
+              <th data-i18n="colName">姓名</th>
+              <th data-i18n="colStatus">狀態</th>
+              <th data-i18n="colJoinedAt">加入時間</th>
+              <th></th>
+            </tr>
+          </thead>
           <tbody id="members-list"></tbody>
         </table>
       </div>
@@ -75,25 +86,30 @@
     <!-- 額度設定 -->
     <div class="tab-panel" id="panel-quota">
       <div class="card">
-        <h2>設定每月固定額度（每人）</h2>
+        <h2 data-i18n="quotaSetTitle">設定每月固定額度（每人）</h2>
         <div class="row">
           <div class="field">
-            <label for="quota-month">生效月份</label>
+            <label for="quota-month" data-i18n="effectiveMonth">生效月份</label>
             <input type="month" id="quota-month" />
           </div>
           <div class="field">
-            <label for="quota-amount">每人每月額度</label>
+            <label for="quota-amount" data-i18n="quotaPerMember">每人每月額度</label>
             <input type="number" id="quota-amount" min="0" step="1" placeholder="500" />
           </div>
-          <button id="save-quota-btn">儲存</button>
+          <button id="save-quota-btn" data-i18n="saveBtn">儲存</button>
         </div>
-        <p class="muted">設定後，該月份「起」的每月額度都會套用這個數字，直到有新的設定覆蓋為止。</p>
+        <p class="muted" data-i18n="quotaHint">設定後，該月份「起」的每月額度都會套用這個數字，直到有新的設定覆蓋為止。</p>
         <div class="error-text" id="quota-error"></div>
       </div>
       <div class="card">
-        <h3>額度歷史</h3>
+        <h3 data-i18n="quotaHistoryTitle">額度歷史</h3>
         <table>
-          <thead><tr><th>生效月份</th><th>每人每月額度</th></tr></thead>
+          <thead>
+            <tr>
+              <th data-i18n="effectiveMonth">生效月份</th>
+              <th data-i18n="quotaPerMember">每人每月額度</th>
+            </tr>
+          </thead>
           <tbody id="quota-history"></tbody>
         </table>
       </div>
@@ -102,45 +118,60 @@
     <!-- 使用紀錄 -->
     <div class="tab-panel" id="panel-usage">
       <div class="card">
-        <h2>新增使用紀錄</h2>
+        <h2 data-i18n="addUsageTitle">新增使用紀錄</h2>
         <div class="row">
           <div class="field">
-            <label for="usage-month">月份</label>
+            <label for="usage-month" data-i18n="monthLabel">月份</label>
             <input type="month" id="usage-month" />
           </div>
           <div class="field" style="flex:1;">
-            <label for="usage-note">備註（選填，套用到這次全部紀錄）</label>
-            <input id="usage-note" placeholder="例如：團隊聚餐" style="width:100%" />
+            <label for="usage-note" data-i18n="noteLabel">備註（選填，套用到這次全部紀錄）</label>
+            <input id="usage-note" placeholder="例如：團隊聚餐" data-i18n-placeholder="notePlaceholder" style="width:100%" />
           </div>
         </div>
 
         <div class="row" style="align-items:flex-end;">
           <div class="field">
-            <label for="usage-split-amount">分攤金額</label>
-            <input type="number" id="usage-split-amount" min="0" step="1" placeholder="輸入總金額" style="width:140px" />
+            <label for="usage-split-amount" data-i18n="splitAmountLabel">分攤金額</label>
+            <input type="number" id="usage-split-amount" min="0" step="1" placeholder="輸入總金額" data-i18n-placeholder="splitAmountPlaceholder" style="width:140px" />
           </div>
           <div class="field">
             <label>&nbsp;</label>
-            <button class="secondary" id="apply-split-btn">平均分攤到下面勾選的組員</button>
+            <button class="secondary" id="apply-split-btn" data-i18n="applySplitBtn">平均分攤到下面勾選的組員</button>
           </div>
         </div>
-        <p class="muted" style="margin:4px 0 12px;">預設全部組員勾選、平均分攤；取消勾選可排除某人，或直接手動改每個人的金額。</p>
+        <p class="muted" style="margin:4px 0 12px;" data-i18n="splitHint">預設全部組員勾選、平均分攤；取消勾選可排除某人，或直接手動改每個人的金額。</p>
 
         <table>
-          <thead><tr><th>參加</th><th>組員</th><th>金額（分攤）</th><th>額外費用（不分攤）</th></tr></thead>
+          <thead>
+            <tr>
+              <th data-i18n="colJoin">參加</th>
+              <th data-i18n="colMember">組員</th>
+              <th data-i18n="colSplitAmount">金額（分攤）</th>
+              <th data-i18n="colExtraAmount">額外費用（不分攤）</th>
+            </tr>
+          </thead>
           <tbody id="usage-member-rows"></tbody>
         </table>
-        <p class="muted" style="margin-top:8px;">「額外費用」跟分攤無關，每個組員都可以各自填，自己單獨記一筆。</p>
+        <p class="muted" style="margin-top:8px;" data-i18n="extraHint">「額外費用」跟分攤無關，每個組員都可以各自填，自己單獨記一筆。</p>
 
         <div class="row" style="margin-top:12px;">
-          <button id="submit-usage-btn">送出</button>
+          <button id="submit-usage-btn" data-i18n="submitBtn">送出</button>
         </div>
         <div class="error-text" id="usage-error"></div>
       </div>
       <div class="card">
-        <h3>紀錄列表</h3>
+        <h3 data-i18n="usageListTitle">紀錄列表</h3>
         <table>
-          <thead><tr><th>月份</th><th>組員</th><th>金額</th><th>備註</th><th></th></tr></thead>
+          <thead>
+            <tr>
+              <th data-i18n="monthLabel">月份</th>
+              <th data-i18n="colMember">組員</th>
+              <th data-i18n="colAmount">金額</th>
+              <th data-i18n="colNote">備註</th>
+              <th></th>
+            </tr>
+          </thead>
           <tbody id="usage-list"></tbody>
         </table>
       </div>
@@ -148,6 +179,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/supabaseClient.js"></script>
   <script src="js/calc.js"></script>
   <script src="js/app.js"></script>

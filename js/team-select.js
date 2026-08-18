@@ -22,11 +22,11 @@ document.getElementById('join-btn').addEventListener('click', async () => {
   const errEl = document.getElementById('join-error');
   errEl.textContent = '';
   const code = codeInput.value.trim().toLowerCase();
-  if (!code) { errEl.textContent = '請輸入組別代碼'; return; }
+  if (!code) { errEl.textContent = t('errJoinEmpty'); return; }
 
   const { data, error } = await sb.from('teams').select('*').eq('code', code).maybeSingle();
-  if (error) { errEl.textContent = '連線失敗：' + error.message; return; }
-  if (!data) { errEl.textContent = '找不到這個組別代碼'; return; }
+  if (error) { errEl.textContent = t('errJoinConn') + error.message; return; }
+  if (!data) { errEl.textContent = t('errJoinNotFound'); return; }
   goToApp(data);
 });
 
@@ -37,7 +37,7 @@ document.getElementById('create-btn').addEventListener('click', async () => {
   const code = normalizeCode(codeInput.value);
 
   if (!CODE_PATTERN.test(code)) {
-    errEl.textContent = '代碼請用 3–30 個英文字母、數字或 - ，不要用中文';
+    errEl.textContent = t('errCreatePattern');
     return;
   }
 
@@ -47,7 +47,7 @@ document.getElementById('create-btn').addEventListener('click', async () => {
     .select()
     .single();
   if (error) {
-    errEl.textContent = error.code === '23505' ? '這個代碼已經有人用了，換一個試試' : '建立失敗：' + error.message;
+    errEl.textContent = error.code === '23505' ? t('errCreateTaken') : t('errCreateFail') + error.message;
     return;
   }
   goToApp(data);
