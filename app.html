@@ -103,21 +103,34 @@
     <div class="tab-panel" id="panel-usage">
       <div class="card">
         <h2>新增使用紀錄</h2>
-        <div class="field" style="max-width:200px;">
-          <label for="usage-month">月份（套用到下面每一列）</label>
-          <input type="month" id="usage-month" />
+        <div class="row">
+          <div class="field">
+            <label for="usage-month">月份</label>
+            <input type="month" id="usage-month" />
+          </div>
+          <div class="field" style="flex:1;">
+            <label for="usage-note">備註（選填，套用到這次全部紀錄）</label>
+            <input id="usage-note" placeholder="例如：團隊聚餐" style="width:100%" />
+          </div>
         </div>
 
+        <div class="row" style="align-items:flex-end;">
+          <div class="field">
+            <label for="usage-split-amount">分攤金額</label>
+            <input type="number" id="usage-split-amount" min="0" step="1" placeholder="輸入總金額" style="width:140px" />
+          </div>
+          <button class="secondary" id="apply-split-btn">平均分攤到下面勾選的組員</button>
+        </div>
+        <p class="muted" style="margin:4px 0 12px;">預設全部組員勾選、平均分攤；取消勾選可排除某人，或直接手動改每個人的金額。</p>
+
         <table>
-          <thead><tr><th>組員</th><th>金額</th><th>備註</th><th></th></tr></thead>
-          <tbody id="usage-rows"></tbody>
+          <thead><tr><th>參加</th><th>組員</th><th>金額</th></tr></thead>
+          <tbody id="usage-member-rows"></tbody>
         </table>
 
         <div class="row" style="margin-top:12px;">
-          <button class="secondary" id="add-usage-row-btn">+ 新增一列</button>
-          <button id="submit-usage-rows-btn">全部送出</button>
+          <button id="submit-usage-btn">送出</button>
         </div>
-        <p class="muted" style="margin-top:8px;">組員選「👥 全部組員」時可以選：整筆金額平均分攤給每個人，或是每個人都各記一筆同樣的金額。</p>
         <div class="error-text" id="usage-error"></div>
       </div>
       <div class="card">

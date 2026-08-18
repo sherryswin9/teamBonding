@@ -201,105 +201,80 @@ document.getElementById('save-quota-btn').addEventListener('click', async () => 
 });
 
 // ---------- Usage ----------
-const ALL_MEMBERS_VALUE = 'ALL';
-let usageRowCounter = 0;
+function renderUsageMemberRows() {
+  const tbody = document.getElementById('usage-member-rows');
 
-function usageMemberOptionsHtml() {
-  const activeOptions = state.members
-    .filter((m) => m.active)
-    .map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`)
-    .join('');
-  return `<option value="${ALL_MEMBERS_VALUE}">👥 全部組員</option>${activeOptions}`;
-}
-
-function addUsageRow() {
-  const tbody = document.getElementById('usage-rows');
-  const rowId = ++usageRowCounter;
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td><select class="usage-row-member">${usageMemberOptionsHtml()}</select></td>
-    <td>
-      <input type="number" class="usage-row-amount" min="0" step="1" placeholder="0" style="width:100px" />
-      <div class="usage-row-split-mode muted" style="display:none; font-size:12px; margin-top:4px;">
-        <label style="display:inline; margin-right:8px;"><input type="radio" name="split-mode-${rowId}" value="split" checked /> 平均分攤</label>
-        <label style="display:inline;"><input type="radio" name="split-mode-${rowId}" value="each" /> 每人都算這金額</label>
-      </div>
-    </td>
-    <td><input type="text" class="usage-row-note" placeholder="備註（選填）" style="width:100%" /></td>
-    <td><button class="ghost" data-remove-row>✕</button></td>
-  `;
-  tr.querySelector('[data-remove-row]').addEventListener('click', () => tr.remove());
-  const memberSelect = tr.querySelector('.usage-row-member');
-  const splitModeDiv = tr.querySelector('.usage-row-split-mode');
-  memberSelect.addEventListener('change', () => {
-    splitModeDiv.style.display = memberSelect.value === ALL_MEMBERS_VALUE ? 'block' : 'none';
+  // Preserve whatever the user already typed/checked across re-renders
+  // (e.g. triggered by switching tabs or another save elsewhere).
+  const prevState = {};
+  tbody.querySelectorAll('tr[data-member-id]').forEach((tr) => {
+    prevState[tr.dataset.memberId] = {
+      checked: tr.querySelector('.usage-member-check').checked,
+      amount: tr.querySelector('.usage-member-amount').value,
+    };
   });
-  tbody.appendChild(tr);
+
+  const activeMembers = state.members.filter((m) => m.active);
+  tbody.innerHTML = activeMembers
+    .map((m) => {
+      const prev = prevState[m.id];
+      const checked = prev ? prev.checked : true;
+      const amount = prev ? prev.amount : '';
+      return `
+        <tr data-member-id="${m.id}">
+          <td><input type="checkbox" class="usage-member-check" ${checked ? 'checked' : ''} /></td>
+          <td>${escapeHtml(m.name)}</td>
+          <td><input type="number" class="usage-member-amount" min="0" step="1" placeholder="0" style="width:100px" value="${amount}" /></td>
+        </tr>
+      `;
+    })
+    .join('') || '<tr><td colspan="3" class="muted">尚無組員，先到「組員管理」新增</td></tr>';
 }
 
-function refreshUsageRowMemberOptions() {
-  document.querySelectorAll('#usage-rows tr').forEach((tr) => {
-    const sel = tr.querySelector('.usage-row-member');
-    const prev = sel.value;
-    sel.innerHTML = usageMemberOptionsHtml();
-    if (prev && [...sel.options].some((o) => o.value === prev)) sel.value = prev;
-    const splitModeDiv = tr.querySelector('.usage-row-split-mode');
-    splitModeDiv.style.display = sel.value === ALL_MEMBERS_VALUE ? 'block' : 'none';
-  });
-}
+document.getElementById('apply-split-btn').addEventListener('click', () => {
+  const errEl = document.getElementById('usage-error');
+  errEl.textContent = '';
+  const total = Number(document.getElementById('usage-split-amount').value);
+  if (Number.isNaN(total) || total < 0) { errEl.textContent = '請輸入正確的分攤總金額'; return; }
 
-document.getElementById('add-usage-row-btn').addEventListener('click', addUsageRow);
+  const checkedRows = [...document.querySelectorAll('#usage-member-rows tr[data-member-id]')]
+    .filter((tr) => tr.querySelector('.usage-member-check').checked);
+  if (checkedRows.length === 0) { errEl.textContent = '請至少勾選一位組員'; return; }
 
-document.getElementById('submit-usage-rows-btn').addEventListener('click', async () => {
+  const perPerson = Math.round((total / checkedRows.length) * 100) / 100;
+  checkedRows.forEach((tr) => { tr.querySelector('.usage-member-amount').value = perPerson; });
+});
+
+document.getElementById('submit-usage-btn').addEventListener('click', async () => {
   const errEl = document.getElementById('usage-error');
   errEl.textContent = '';
   const monthInput = document.getElementById('usage-month').value;
   if (!monthInput) { errEl.textContent = '請選擇月份'; return; }
+  const note = document.getElementById('usage-note').value.trim();
 
-  const activeMembers = state.members.filter((m) => m.active);
   const records = [];
-  for (const row of document.querySelectorAll('#usage-rows tr')) {
-    const memberId = row.querySelector('.usage-row-member').value;
-    const amountRaw = row.querySelector('.usage-row-amount').value;
-    const note = row.querySelector('.usage-row-note').value.trim();
-    if (!memberId || amountRaw === '') continue;
+  for (const tr of document.querySelectorAll('#usage-member-rows tr[data-member-id]')) {
+    if (!tr.querySelector('.usage-member-check').checked) continue;
+    const amountRaw = tr.querySelector('.usage-member-amount').value;
+    if (amountRaw === '') continue;
     const amount = Number(amountRaw);
-    if (Number.isNaN(amount) || amount < 0) continue;
-
-    if (memberId === ALL_MEMBERS_VALUE) {
-      if (activeMembers.length === 0) continue;
-      const mode = row.querySelector('.usage-row-split-mode input:checked')?.value || 'split';
-      const perPerson = mode === 'split'
-        ? Math.round((amount / activeMembers.length) * 100) / 100
-        : amount;
-      const tag = mode === 'split' ? `全部組員平均分攤（總額 ${fmt(amount)}）` : '全部組員（每人同額）';
-      for (const m of activeMembers) {
-        records.push({
-          team_id: state.teamId,
-          member_id: m.id,
-          month: TBFCalc.toMonthDate(monthInput),
-          amount: perPerson,
-          note: note ? `${note} · ${tag}` : tag,
-        });
-      }
-      continue;
-    }
-
+    if (Number.isNaN(amount) || amount <= 0) continue;
     records.push({
       team_id: state.teamId,
-      member_id: memberId,
+      member_id: tr.dataset.memberId,
       month: TBFCalc.toMonthDate(monthInput),
       amount,
       note: note || null,
     });
   }
-  if (records.length === 0) { errEl.textContent = '請至少填一列（選組員＋金額）'; return; }
+  if (records.length === 0) { errEl.textContent = '請至少勾選一位組員並填金額'; return; }
 
   const { error } = await sb.from('usage_log').insert(records);
   if (error) { errEl.textContent = '新增失敗：' + error.message; return; }
 
-  document.getElementById('usage-rows').innerHTML = '';
-  addUsageRow();
+  document.getElementById('usage-split-amount').value = '';
+  document.getElementById('usage-note').value = '';
+  document.querySelectorAll('#usage-member-rows .usage-member-amount').forEach((i) => { i.value = ''; });
   await refreshAndRender();
 });
 
@@ -339,7 +314,7 @@ async function refreshAndRender() {
   renderDashboard();
   renderMembersList();
   renderQuotaHistory();
-  refreshUsageRowMemberOptions();
+  renderUsageMemberRows();
   renderUsageList();
 }
 
@@ -350,7 +325,6 @@ async function refreshAndRender() {
   const cur = TBFCalc.currentMonthKey();
   document.getElementById('quota-month').value = cur;
   document.getElementById('usage-month').value = cur;
-  addUsageRow();
 
   await refreshAndRender();
 })();
