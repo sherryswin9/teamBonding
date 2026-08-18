@@ -127,22 +127,10 @@
         <p class="muted" style="margin:4px 0 12px;">預設全部組員勾選、平均分攤；取消勾選可排除某人，或直接手動改每個人的金額。</p>
 
         <table>
-          <thead><tr><th>參加</th><th>組員</th><th>金額</th></tr></thead>
+          <thead><tr><th>參加</th><th>組員</th><th>金額（分攤）</th><th>額外費用（不分攤）</th></tr></thead>
           <tbody id="usage-member-rows"></tbody>
         </table>
-
-        <h3 style="margin-top:20px;">額外費用（不分攤，選填）</h3>
-        <p class="muted" style="margin:0 0 8px;">跟上面平均分攤無關，單獨記一筆金額在某個組員身上。</p>
-        <div class="row" style="align-items:flex-end;">
-          <div class="field">
-            <label for="usage-extra-member">組員</label>
-            <select id="usage-extra-member"></select>
-          </div>
-          <div class="field">
-            <label for="usage-extra-amount">金額</label>
-            <input type="number" id="usage-extra-amount" min="0" step="1" placeholder="0" style="width:120px" />
-          </div>
-        </div>
+        <p class="muted" style="margin-top:8px;">「額外費用」跟分攤無關，每個組員都可以各自填，自己單獨記一筆。</p>
 
         <div class="row" style="margin-top:12px;">
           <button id="submit-usage-btn">送出</button>

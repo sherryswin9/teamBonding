@@ -211,6 +211,7 @@ function renderUsageMemberRows() {
     prevState[tr.dataset.memberId] = {
       checked: tr.querySelector('.usage-member-check').checked,
       amount: tr.querySelector('.usage-member-amount').value,
+      extra: tr.querySelector('.usage-member-extra').value,
     };
   });
 
@@ -220,25 +221,17 @@ function renderUsageMemberRows() {
       const prev = prevState[m.id];
       const checked = prev ? prev.checked : true;
       const amount = prev ? prev.amount : '';
+      const extra = prev ? prev.extra : '';
       return `
         <tr data-member-id="${m.id}">
           <td><input type="checkbox" class="usage-member-check" ${checked ? 'checked' : ''} /></td>
           <td>${escapeHtml(m.name)}</td>
           <td><input type="number" class="usage-member-amount" min="0" step="1" placeholder="0" style="width:100px" value="${amount}" /></td>
+          <td><input type="number" class="usage-member-extra" min="0" step="1" placeholder="0" style="width:100px" value="${extra}" /></td>
         </tr>
       `;
     })
-    .join('') || '<tr><td colspan="3" class="muted">尚無組員，先到「組員管理」新增</td></tr>';
-}
-
-function renderUsageExtraMemberOptions() {
-  const sel = document.getElementById('usage-extra-member');
-  const prev = sel.value;
-  sel.innerHTML = state.members
-    .filter((m) => m.active)
-    .map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`)
-    .join('');
-  if (prev && [...sel.options].some((o) => o.value === prev)) sel.value = prev;
+    .join('') || '<tr><td colspan="4" class="muted">尚無組員，先到「組員管理」新增</td></tr>';
 }
 
 document.getElementById('apply-split-btn').addEventListener('click', () => {
@@ -264,27 +257,28 @@ document.getElementById('submit-usage-btn').addEventListener('click', async () =
 
   const records = [];
   for (const tr of document.querySelectorAll('#usage-member-rows tr[data-member-id]')) {
-    if (!tr.querySelector('.usage-member-check').checked) continue;
-    const amountRaw = tr.querySelector('.usage-member-amount').value;
-    if (amountRaw === '') continue;
-    const amount = Number(amountRaw);
-    if (Number.isNaN(amount) || amount <= 0) continue;
-    records.push({
-      team_id: state.teamId,
-      member_id: tr.dataset.memberId,
-      month: TBFCalc.toMonthDate(monthInput),
-      amount,
-      note: note || null,
-    });
-  }
-  const extraMemberId = document.getElementById('usage-extra-member').value;
-  const extraAmountRaw = document.getElementById('usage-extra-amount').value;
-  if (extraMemberId && extraAmountRaw !== '') {
-    const extraAmount = Number(extraAmountRaw);
-    if (!Number.isNaN(extraAmount) && extraAmount > 0) {
+    const memberId = tr.dataset.memberId;
+
+    if (tr.querySelector('.usage-member-check').checked) {
+      const amountRaw = tr.querySelector('.usage-member-amount').value;
+      const amount = Number(amountRaw);
+      if (amountRaw !== '' && !Number.isNaN(amount) && amount > 0) {
+        records.push({
+          team_id: state.teamId,
+          member_id: memberId,
+          month: TBFCalc.toMonthDate(monthInput),
+          amount,
+          note: note || null,
+        });
+      }
+    }
+
+    const extraRaw = tr.querySelector('.usage-member-extra').value;
+    const extraAmount = Number(extraRaw);
+    if (extraRaw !== '' && !Number.isNaN(extraAmount) && extraAmount > 0) {
       records.push({
         team_id: state.teamId,
-        member_id: extraMemberId,
+        member_id: memberId,
         month: TBFCalc.toMonthDate(monthInput),
         amount: extraAmount,
         note: note ? `${note} · 額外費用（不分攤）` : '額外費用（不分攤）',
@@ -292,15 +286,14 @@ document.getElementById('submit-usage-btn').addEventListener('click', async () =
     }
   }
 
-  if (records.length === 0) { errEl.textContent = '請至少勾選一位組員並填金額，或填寫額外費用'; return; }
+  if (records.length === 0) { errEl.textContent = '請至少填一個金額（分攤或額外費用）'; return; }
 
   const { error } = await sb.from('usage_log').insert(records);
   if (error) { errEl.textContent = '新增失敗：' + error.message; return; }
 
   document.getElementById('usage-split-amount').value = '';
   document.getElementById('usage-note').value = '';
-  document.getElementById('usage-extra-amount').value = '';
-  document.querySelectorAll('#usage-member-rows .usage-member-amount').forEach((i) => { i.value = ''; });
+  document.querySelectorAll('#usage-member-rows .usage-member-amount, #usage-member-rows .usage-member-extra').forEach((i) => { i.value = ''; });
   await refreshAndRender();
 });
 
@@ -341,7 +334,6 @@ async function refreshAndRender() {
   renderMembersList();
   renderQuotaHistory();
   renderUsageMemberRows();
-  renderUsageExtraMemberOptions();
   renderUsageList();
 }
 
