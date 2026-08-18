@@ -103,24 +103,19 @@
     <div class="tab-panel" id="panel-usage">
       <div class="card">
         <h2>新增使用紀錄</h2>
-        <div class="row">
-          <div class="field">
-            <label for="usage-member">組員</label>
-            <select id="usage-member"></select>
-          </div>
-          <div class="field">
-            <label for="usage-month">月份</label>
-            <input type="month" id="usage-month" />
-          </div>
-          <div class="field">
-            <label for="usage-amount">金額</label>
-            <input type="number" id="usage-amount" min="0" step="1" placeholder="0" />
-          </div>
-          <div class="field" style="flex:1;">
-            <label for="usage-note">備註</label>
-            <input id="usage-note" placeholder="例如：團隊聚餐" style="width:100%" />
-          </div>
-          <button id="add-usage-btn">新增</button>
+        <div class="field" style="max-width:200px;">
+          <label for="usage-month">月份（套用到下面每一列）</label>
+          <input type="month" id="usage-month" />
+        </div>
+
+        <table>
+          <thead><tr><th>組員</th><th>金額</th><th>備註</th><th></th></tr></thead>
+          <tbody id="usage-rows"></tbody>
+        </table>
+
+        <div class="row" style="margin-top:12px;">
+          <button class="secondary" id="add-usage-row-btn">+ 新增一列</button>
+          <button id="submit-usage-rows-btn">全部送出</button>
         </div>
         <div class="error-text" id="usage-error"></div>
       </div>

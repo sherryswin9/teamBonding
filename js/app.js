@@ -21,8 +21,7 @@ function requireTeam() {
 }
 
 function renderTopbar() {
-  const label = state.teamName ? `${state.teamName}（代碼：${state.teamCode}）` : `代碼：${state.teamCode}`;
-  document.getElementById('team-info').textContent = label;
+  document.getElementById('team-info').textContent = `組別代碼：${state.teamCode}`;
 }
 
 document.getElementById('switch-team-btn').addEventListener('click', () => {
@@ -202,13 +201,67 @@ document.getElementById('save-quota-btn').addEventListener('click', async () => 
 });
 
 // ---------- Usage ----------
-function populateUsageMemberSelect() {
-  const sel = document.getElementById('usage-member');
-  sel.innerHTML = state.members
+function usageMemberOptionsHtml() {
+  return state.members
     .filter((m) => m.active)
     .map((m) => `<option value="${m.id}">${escapeHtml(m.name)}</option>`)
     .join('');
 }
+
+function addUsageRow() {
+  const tbody = document.getElementById('usage-rows');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><select class="usage-row-member">${usageMemberOptionsHtml()}</select></td>
+    <td><input type="number" class="usage-row-amount" min="0" step="1" placeholder="0" style="width:100px" /></td>
+    <td><input type="text" class="usage-row-note" placeholder="備註（選填）" style="width:100%" /></td>
+    <td><button class="ghost" data-remove-row>✕</button></td>
+  `;
+  tr.querySelector('[data-remove-row]').addEventListener('click', () => tr.remove());
+  tbody.appendChild(tr);
+}
+
+function refreshUsageRowMemberOptions() {
+  document.querySelectorAll('#usage-rows .usage-row-member').forEach((sel) => {
+    const prev = sel.value;
+    sel.innerHTML = usageMemberOptionsHtml();
+    if (prev && [...sel.options].some((o) => o.value === prev)) sel.value = prev;
+  });
+}
+
+document.getElementById('add-usage-row-btn').addEventListener('click', addUsageRow);
+
+document.getElementById('submit-usage-rows-btn').addEventListener('click', async () => {
+  const errEl = document.getElementById('usage-error');
+  errEl.textContent = '';
+  const monthInput = document.getElementById('usage-month').value;
+  if (!monthInput) { errEl.textContent = '請選擇月份'; return; }
+
+  const records = [];
+  for (const row of document.querySelectorAll('#usage-rows tr')) {
+    const memberId = row.querySelector('.usage-row-member').value;
+    const amountRaw = row.querySelector('.usage-row-amount').value;
+    const note = row.querySelector('.usage-row-note').value.trim();
+    if (!memberId || amountRaw === '') continue;
+    const amount = Number(amountRaw);
+    if (Number.isNaN(amount) || amount < 0) continue;
+    records.push({
+      team_id: state.teamId,
+      member_id: memberId,
+      month: TBFCalc.toMonthDate(monthInput),
+      amount,
+      note: note || null,
+    });
+  }
+  if (records.length === 0) { errEl.textContent = '請至少填一列（選組員＋金額）'; return; }
+
+  const { error } = await sb.from('usage_log').insert(records);
+  if (error) { errEl.textContent = '新增失敗：' + error.message; return; }
+
+  document.getElementById('usage-rows').innerHTML = '';
+  addUsageRow();
+  await refreshAndRender();
+});
 
 function renderUsageList() {
   const memberName = (id) => state.members.find((m) => m.id === id)?.name || '（已刪除）';
@@ -233,32 +286,6 @@ function renderUsageList() {
   });
 }
 
-document.getElementById('add-usage-btn').addEventListener('click', async () => {
-  const memberId = document.getElementById('usage-member').value;
-  const monthInput = document.getElementById('usage-month').value;
-  const amountInput = document.getElementById('usage-amount').value;
-  const note = document.getElementById('usage-note').value.trim();
-  const errEl = document.getElementById('usage-error');
-  errEl.textContent = '';
-
-  if (!memberId) { errEl.textContent = '請先新增組員'; return; }
-  if (!monthInput) { errEl.textContent = '請選擇月份'; return; }
-  const amount = Number(amountInput);
-  if (Number.isNaN(amount) || amount < 0) { errEl.textContent = '請輸入正確金額'; return; }
-
-  const { error } = await sb.from('usage_log').insert({
-    team_id: state.teamId,
-    member_id: memberId,
-    month: TBFCalc.toMonthDate(monthInput),
-    amount,
-    note: note || null,
-  });
-  if (error) { errEl.textContent = '新增失敗：' + error.message; return; }
-  document.getElementById('usage-amount').value = '';
-  document.getElementById('usage-note').value = '';
-  await refreshAndRender();
-});
-
 // ---------- Glue ----------
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -272,7 +299,7 @@ async function refreshAndRender() {
   renderDashboard();
   renderMembersList();
   renderQuotaHistory();
-  populateUsageMemberSelect();
+  refreshUsageRowMemberOptions();
   renderUsageList();
 }
 
@@ -283,6 +310,7 @@ async function refreshAndRender() {
   const cur = TBFCalc.currentMonthKey();
   document.getElementById('quota-month').value = cur;
   document.getElementById('usage-month').value = cur;
+  addUsageRow();
 
   await refreshAndRender();
 })();

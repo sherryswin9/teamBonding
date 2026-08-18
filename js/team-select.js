@@ -1,6 +1,8 @@
-function genCode() {
-  return Math.random().toString(36).slice(2, 8);
+function normalizeCode(raw) {
+  return raw.trim().toLowerCase().replace(/\s+/g, '-');
 }
+
+const CODE_PATTERN = /^[a-z0-9-]{3,30}$/;
 
 function goToApp(team) {
   localStorage.setItem('tbf_team_id', team.id);
@@ -29,25 +31,24 @@ document.getElementById('join-btn').addEventListener('click', async () => {
 });
 
 document.getElementById('create-btn').addEventListener('click', async () => {
-  const nameInput = document.getElementById('new-team-name');
+  const codeInput = document.getElementById('new-team-code');
   const errEl = document.getElementById('create-error');
   errEl.textContent = '';
-  const name = nameInput.value.trim();
+  const code = normalizeCode(codeInput.value);
 
-  let attempts = 0;
-  while (attempts < 5) {
-    const code = genCode();
-    const { data, error } = await sb
-      .from('teams')
-      .insert({ code, name: name || null })
-      .select()
-      .single();
-    if (!error) { goToApp(data); return; }
-    if (error.code !== '23505') { // not a unique-violation, give up
-      errEl.textContent = '建立失敗：' + error.message;
-      return;
-    }
-    attempts++;
+  if (!CODE_PATTERN.test(code)) {
+    errEl.textContent = '代碼請用 3–30 個英文字母、數字或 - ，不要用中文';
+    return;
   }
-  errEl.textContent = '建立失敗，請再試一次';
+
+  const { data, error } = await sb
+    .from('teams')
+    .insert({ code, name: code })
+    .select()
+    .single();
+  if (error) {
+    errEl.textContent = error.code === '23505' ? '這個代碼已經有人用了，換一個試試' : '建立失敗：' + error.message;
+    return;
+  }
+  goToApp(data);
 });
